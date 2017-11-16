@@ -9,34 +9,47 @@ WHITE = "O"
 WHITE_KING = "W"
 
 letter_row = ""
-black_count = int((SIZE - 2) * 0.25 * SIZE)
-white_count = int((SIZE - 2) * 0.25 * SIZE)
+black_count = 0
+white_count = 0
+
+board = []
+history = []
 
 
 # Function to initialise the board
 def initialise_board():
-    # Creating an empty two-dimensional list to store the pieces
+    # Updating to a two-dimensional list to store the pieces
+    global board
     board = [[EMPTY] * SIZE for i in range(SIZE)]
 
     # Populating the board with pieces based on the row and column
     for row in range(0, SIZE):
         # Black pieces in the first rows/2-1 rows
         if row < SIZE / 2 - 1:
-            populate_row(board, row, BLACK)
+            populate_row(row, BLACK)
         # White pieces in the last rows/2-1 rows
         elif row > SIZE / 2:
-            populate_row(board, row, WHITE)
+            populate_row(row, WHITE)
 
     # Printing the letter row
     global letter_row
     for i in range(ord('A'), ord('A') + SIZE):
         letter_row += chr(i)
 
-    return board
 
+# Function to add a board representation to the history list
+def add_state():
+    history.append([x[:] for x in board])
+
+
+# Function to replay previous game
+def replay():
+    # Iterate through each board state stored in history and print it
+    for state in history:
+        print_board(state)
 
 # Function to fill a row with pieces
-def populate_row(board, row, piece):
+def populate_row(row, piece):
     # Based on the row, put the pieces into the right cell
     if row % 2 == 0:
         for element in range(0, SIZE):
@@ -49,35 +62,48 @@ def populate_row(board, row, piece):
 
 
 # Function to print the board with letter rows and number columns
-def print_board(board):
+def print_board(current=[]):
+    # Optional argument for when the user is replaying a game, if not passed print the current state of the board
+    if current:
+        grid = current
+    else:
+        grid = board
+
     print('   ', ' '.join(letter_row))
     for row in range(0, SIZE):
-        print(row + 1, ' ', ' '.join([element for element in board[row]]), ' ', row + 1)
+        print(row + 1, ' ', ' '.join([element for element in grid[row]]), ' ', row + 1)
     print('   ', ' '.join(letter_row))
 
 
 # Function for playing an actual game of checkers
-def play_game(board, mode):
+def play_game(mode):
     # Always set the first turn to black
     turn = BLACK
 
     # Game loop until one of the sides loses all the pieces
     while black_count > 0 and white_count > 0:
+        # If no moves for the player to make, it's a draw
+        if not moves_available():
+            print("It's a draw!")
+            break
         # Printing the number of pieces for each of the sides
         print("Black: ", black_count, "White: ", white_count)
         # Printing the board
-        print_board(board)
+        print_board()
+        # Saving the current state of the board
+        add_state()
 
         if turn == BLACK:
             # If mode is Player vs Player, ask for input
             if mode == 1:
                 move = input("\nBlack's move: ")
                 # If user's input is invalid, try again
-                if not user_move(board, move, turn):
+                if not user_move(move, turn):
                     continue
             # If black are played by the computer, generate a move
             else:
-                computer_move(board, turn)
+                computer_move(turn)
+                #time.sleep(1)
             # Give the next round to White
             turn = WHITE
 
@@ -86,26 +112,31 @@ def play_game(board, mode):
             if mode != 3:
                 move = input("\nWhite's move: ")
                 # If user's input is invalid, try again
-                if not user_move(board, move, turn):
+                if not user_move(move, turn):
                     continue
             # If white are played by the computer, generate move
             else:
-                computer_move(board, turn)
+                computer_move(turn)
+                #time.sleep(1)
             # Give the next round to Black
             turn = BLACK
 
     # If game reaches an end, announce the winner
     else:
         print("Black: ", black_count, "White: ", white_count)
-        print_board(board)
+        print_board()
         if white_count == 0:
             print("Black won!")
         else:
             print("White won!")
 
 
+# Function to check whether a player has available moves
+def moves_available():
+    return True
+
 # Function to check and execute user's move
-def user_move(board, move, turn):
+def user_move(move, turn):
 
     # Checking the length of the string
     if len(move) > 7:
@@ -260,7 +291,7 @@ def user_move(board, move, turn):
 
 
 # Function to generate a move for the computer
-def computer_move(board, turn):
+def computer_move(turn):
 
     # This needs reworked obvy
 
@@ -271,15 +302,14 @@ def computer_move(board, turn):
         second_row = random.choice(range(0, SIZE)) + 1
 
         move = "{}{}-{}{}".format(first_column, first_row, second_column, second_row)
-        if computer_check(board, move, turn):
+        if computer_check(move, turn):
             print(move)
             break
-
     return
 
 
 # Function to check and execute computer's move
-def computer_check(board, move, turn):
+def computer_check(move, turn):
 
     first_column = ord(move[0].upper()) - 65
     first_row = int(move[1]) - 1
@@ -365,21 +395,40 @@ def computer_check(board, move, turn):
 
     return True
 
-# Function that executes the move
-def make_move():
-    return True
-
 
 def main():
+    # Prompting for the size of the board
+    # while True:
+    #     global SIZE
+    #     SIZE = int(input("Please select board size (even number > 2): "))
+    #     if SIZE % 2 == 0 and SIZE > 2:
+    #         break
+
+    # Setting the piece counters
+    global black_count
+    black_count = int((SIZE - 2) * 0.25 * SIZE)
+    global white_count
+    white_count = int((SIZE - 2) * 0.25 * SIZE)
+
     # Initialise the board
-    board = initialise_board()
+    initialise_board()
     # Prompt the user for game type
-    mode = int(input("Player vs Player (1)"
-                     "\nPlayer vs PC (2)"
-                     "\nPC vs PC (3)"
-                     "\nYour Choice: "))
+    while True:
+        try:
+            mode = int(input("Player vs Player (1)"
+                             "\nPlayer vs PC (2)"
+                             "\nPC vs PC (3)"
+                             "\nYour Choice: "))
+        except ValueError:
+            continue
+
+        if mode in range(0, 4):
+            break
     # Play the game in selected mode
-    play_game(board, mode)
+    play_game(mode)
+
+    while (input("Replay game (Y/N)?: ").upper()) == "Y":
+        replay()
 
 
 if __name__ == "__main__":
