@@ -11,6 +11,7 @@ WHITE_KING = "W"
 letter_row = ""
 black_count = 0
 white_count = 0
+current_move = 0
 
 board = []
 history = []
@@ -31,7 +32,7 @@ def initialise_board():
         elif row > SIZE / 2:
             populate_row(row, WHITE)
 
-    # Printing the letter row
+    # Populating the letter row
     global letter_row
     for i in range(ord('A'), ord('A') + SIZE):
         letter_row += chr(i)
@@ -39,6 +40,9 @@ def initialise_board():
 
 # Function to add a board representation to the history list
 def add_state():
+    while len(history) - current_move > 1:
+        history.pop()
+
     history.append([x[:] for x in board])
 
 
@@ -47,6 +51,40 @@ def replay():
     # Iterate through each board state stored in history and print it
     for state in history:
         print_board(state)
+        time.sleep(1)
+
+
+# Function to undo a previous move
+def undo_move(turn):
+    global board
+    global current_move
+    # Checking that the player is not at the beginning of the game
+    if turn == BLACK:
+        if current_move == 0:
+            print("No moves to undo!")
+            return
+    else:
+        if current_move == 1:
+            print("No moves to undo!")
+            return
+
+    # Updating the number of the move
+    current_move -= 2
+    # Setting the current board to a previous state
+    board = [x[:] for x in history[current_move]]
+
+
+# Function to redo move
+def redo_move():
+    global board
+    global current_move
+    # Checking that there are moves that can be redone
+    if len(history) - current_move >= 3:
+        current_move += 2
+        board = [x[:] for x in history[current_move]]
+    else:
+        print("No moves to redo!")
+
 
 # Function to fill a row with pieces
 def populate_row(row, piece):
@@ -77,8 +115,12 @@ def print_board(current=[]):
 
 # Function for playing an actual game of checkers
 def play_game(mode):
+
+    global current_move
     # Always set the first turn to black
     turn = BLACK
+    # Add the initial state of the board to move tracking
+    add_state()
 
     # Game loop until one of the sides loses all the pieces
     while black_count > 0 and white_count > 0:
@@ -90,20 +132,34 @@ def play_game(mode):
         print("Black: ", black_count, "White: ", white_count)
         # Printing the board
         print_board()
-        # Saving the current state of the board
-        add_state()
 
         if turn == BLACK:
             # If mode is Player vs Player, ask for input
             if mode == 1:
                 move = input("\nBlack's move: ")
+
+                # Check if attempt to Undo a move
+                if move.upper() == 'U':
+                    undo_move(turn)
+                    continue
+
+                # Check if attempt to Redo a move
+                if move.upper() == 'R':
+                    redo_move()
+                    continue
+
                 # If user's input is invalid, try again
                 if not user_move(move, turn):
                     continue
             # If black are played by the computer, generate a move
             else:
                 computer_move(turn)
-                #time.sleep(1)
+                # time.sleep(1)
+
+            # Saving the current state of the board
+            add_state()
+            # Incrementing the move counter
+            current_move += 1
             # Give the next round to White
             turn = WHITE
 
@@ -111,13 +167,28 @@ def play_game(mode):
             # If mode is not PC vs PC, ask for input
             if mode != 3:
                 move = input("\nWhite's move: ")
+                # Check if attempt to Undo a move
+                if move.upper() == 'U':
+                    undo_move(turn)
+                    continue
+
+                # Check if attempt to Redo a move
+                if move.upper() == 'R':
+                    redo_move()
+                    continue
+
                 # If user's input is invalid, try again
                 if not user_move(move, turn):
                     continue
             # If white are played by the computer, generate move
             else:
                 computer_move(turn)
-                #time.sleep(1)
+                # time.sleep(1)
+
+            # Saving the current state of the board
+            add_state()
+            # Incrementing the move counter
+            current_move += 1
             # Give the next round to Black
             turn = BLACK
 
@@ -134,6 +205,7 @@ def play_game(mode):
 # Function to check whether a player has available moves
 def moves_available():
     return True
+
 
 # Function to check and execute user's move
 def user_move(move, turn):
