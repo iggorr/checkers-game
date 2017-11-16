@@ -124,10 +124,6 @@ def play_game(mode):
 
     # Game loop until one of the sides loses all the pieces
     while black_count > 0 and white_count > 0:
-        # If no moves for the player to make, it's a draw
-        if not moves_available():
-            print("It's a draw!")
-            break
         # Printing the number of pieces for each of the sides
         print("Black: ", black_count, "White: ", white_count)
         # Printing the board
@@ -470,11 +466,11 @@ def computer_check(move, turn):
 
 def main():
     # Prompting for the size of the board
-    # while True:
-    #     global SIZE
-    #     SIZE = int(input("Please select board size (even number > 2): "))
-    #     if SIZE % 2 == 0 and SIZE > 2:
-    #         break
+    while True:
+        global SIZE
+        SIZE = int(input("Please select board size (even number > 2): "))
+        if SIZE % 2 == 0 and SIZE > 2:
+            break
 
     # Setting the piece counters
     global black_count
@@ -496,6 +492,11 @@ def main():
 
         if mode in range(0, 4):
             break
+
+    if mode in range (1, 3):
+        print("\nTo move a piece, specify the starting column + row, "
+              "followed by the dash and target column + row"
+              "\nE.g. b3-c4\n")
     # Play the game in selected mode
     play_game(mode)
 
